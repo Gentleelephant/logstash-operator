@@ -1,0 +1,16 @@
+domain: my.birdhk
+layout:
+- go.kubebuilder.io/v4-alpha
+projectName: logstash-operator
+repo: github.com/Gentleelephant/logstash-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.birdhk
+  group: vstar
+  kind: Logstash
+  path: github.com/Gentleelephant/logstash-operator/api/v1
+  version: v1
+version: "3"

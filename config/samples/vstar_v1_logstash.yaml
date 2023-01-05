@@ -1,0 +1,6 @@
+apiVersion: vstar.my.birdhk/v1
+kind: Logstash
+metadata:
+  name: logstash-sample
+spec:
+  # TODO(user): Add fields here

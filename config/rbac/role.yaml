@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - vstar.my.birdhk
+  resources:
+  - logstashes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - vstar.my.birdhk
+  resources:
+  - logstashes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - vstar.my.birdhk
+  resources:
+  - logstashes/status
+  verbs:
+  - get
+  - patch
+  - update
