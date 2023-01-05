@@ -37,8 +37,10 @@ type LogstashReconciler struct {
 }
 
 //+kubebuilder:rbac:groups=vstar.my.birdhk,resources=logstashes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployment,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=vstar.my.birdhk,resources=logstashes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=vstar.my.birdhk,resources=logstashes/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -68,9 +70,7 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "logstash-deployment",
-			Namespace:         "",
-			UID:               "",
-			ResourceVersion:   "",
+			Namespace:         logstash.Namespace,
 			CreationTimestamp: metav1.Time{},
 			Labels: map[string]string{
 				"app": "logstash",
@@ -120,5 +120,6 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&vstarv1.Logstash{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
