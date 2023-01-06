@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -36,8 +37,8 @@ type LogstashReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=vstar.my.birdhk,resources=logstashes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=apps,resources=deployment,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=vstar.my.birdhk,resources=logstashes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=vstar.my.birdhk,resources=logstashes/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get
@@ -58,41 +59,68 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// deploy logstash
 	var logstash vstarv1.Logstash
+	var deployment appsv1.Deployment
 	if err := r.Get(ctx, req.NamespacedName, &logstash); err != nil {
 		l.Error(err, "unable to fetch Logstash")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	err := r.Get(ctx, req.NamespacedName, &deployment)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			l.Info("Deployment not found")
+			err := r.CreateDeployment(ctx, &logstash)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, err
+	}
+	//binding deployment to podsbook
+	if err = ctrl.SetControllerReference(&logstash, &deployment, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
+}
 
-	var logstashDeployment = &appsv1.Deployment{
+// SetupWithManager sets up the controller with the Manager.
+func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&vstarv1.Logstash{}).
+		Owns(&appsv1.Deployment{}).
+		Complete(r)
+}
+
+func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) error {
+	var deployment = &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              "logstash-deployment",
+			Name:              logstash.Name,
 			Namespace:         logstash.Namespace,
 			CreationTimestamp: metav1.Time{},
 			Labels: map[string]string{
-				"app": "logstash",
+				"app": logstash.Name,
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &logstash.Spec.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": "logstash",
+					"app": logstash.Name,
 				},
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "logstash",
+						"app": logstash.Name,
 					},
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Name:            "opensearch-logstash",
+							Name:            logstash.Name,
 							Image:           logstash.Spec.Image,
 							Command:         []string{"tail", "-f", "/dev/null"},
 							Args:            nil,
@@ -106,20 +134,9 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			},
 		},
 	}
-	err := r.Create(ctx, logstashDeployment)
+	err := r.Create(ctx, deployment)
 	if err != nil {
-		l.Error(err, "unable to create logstash deployment")
-		return ctrl.Result{}, err
+		return err
 	}
-	// create a service
-
-	return ctrl.Result{}, nil
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&vstarv1.Logstash{}).
-		Owns(&appsv1.Deployment{}).
-		Complete(r)
+	return nil
 }

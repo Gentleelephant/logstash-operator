@@ -12,6 +12,8 @@ spec:
     kind: Logstash
     listKind: LogstashList
     plural: logstashes
+    shortNames:
+    - lgsh
     singular: logstash
   scope: Namespaced
   versions:

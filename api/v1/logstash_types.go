@@ -45,6 +45,7 @@ type LogstashStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:shortName=lgsh,scope=Namespaced
 
 // Logstash is the Schema for the logstashes API
 type Logstash struct {
