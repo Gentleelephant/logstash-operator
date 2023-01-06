@@ -57,11 +57,9 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	l := log.FromContext(ctx)
 
 	// TODO(user): your logic here
-
 	// deploy logstash
 	var logstash vstarv1.Logstash
 	var deployment appsv1.Deployment
-	fmt.Println("============namespace===========", req.NamespacedName)
 	if err := r.Get(ctx, req.NamespacedName, &logstash); err != nil {
 		l.Error(err, "unable to fetch Logstash")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -69,7 +67,7 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	err := r.Get(ctx, req.NamespacedName, &deployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			l.Info("Deployment not found")
+			l.Info("deployment not found")
 			err := r.CreateDeployment(ctx, &logstash)
 			if err != nil {
 				return ctrl.Result{}, err
@@ -93,10 +91,12 @@ func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) error {
-	namespace := logstash.Namespace
+	namespace := logstash.ObjectMeta.Namespace
+	fmt.Println("================raw namespace:", namespace)
 	if namespace == "" {
 		namespace = "default"
 	}
+	fmt.Println("================final namespace:", namespace)
 	var deployment = &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -139,7 +139,6 @@ func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vst
 			},
 		},
 	}
-	fmt.Printf("==================>%+v", deployment)
 	err := r.Create(ctx, deployment)
 	if err != nil {
 		return err
