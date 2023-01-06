@@ -38,15 +38,12 @@ spec:
               image:
                 description: Image is the Logstash Docker image
                 type: string
-              namespace:
-                type: string
               replicas:
                 description: Replicas is the number of Logstash instances
                 format: int32
                 type: integer
             required:
             - image
-            - namespace
             - replicas
             type: object
           status:

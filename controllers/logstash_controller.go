@@ -93,6 +93,10 @@ func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) error {
+	namespace := logstash.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
 	var deployment = &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -100,7 +104,7 @@ func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vst
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      logstash.Name,
-			Namespace: logstash.Namespace,
+			Namespace: namespace,
 			Labels: map[string]string{
 				"app": logstash.Name,
 			},

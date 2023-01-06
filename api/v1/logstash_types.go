@@ -33,8 +33,6 @@ type LogstashSpec struct {
 
 	// Image is the Logstash Docker image
 	Image string `json:"image"`
-
-	Namespace string `json:"namespace"`
 }
 
 // LogstashStatus defines the observed state of Logstash
