@@ -1,7 +1,7 @@
 apiVersion: vstar.my.birdhk/v1
 kind: Logstash
 metadata:
-  name: logstash-sample
+  name: opensearch-logstash
   namespace: logstash-operator-system
 spec:
   replicas: 1
