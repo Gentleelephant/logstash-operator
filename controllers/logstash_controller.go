@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,6 +61,7 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// deploy logstash
 	var logstash vstarv1.Logstash
 	var deployment appsv1.Deployment
+	fmt.Println("============namespace===========", req.NamespacedName)
 	if err := r.Get(ctx, req.NamespacedName, &logstash); err != nil {
 		l.Error(err, "unable to fetch Logstash")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -97,9 +99,8 @@ func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vst
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              logstash.Name,
-			Namespace:         logstash.Namespace,
-			CreationTimestamp: metav1.Time{},
+			Name:      logstash.Name,
+			Namespace: logstash.Namespace,
 			Labels: map[string]string{
 				"app": logstash.Name,
 			},
@@ -134,6 +135,7 @@ func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vst
 			},
 		},
 	}
+	fmt.Printf("==================>%+v", deployment)
 	err := r.Create(ctx, deployment)
 	if err != nil {
 		return err
