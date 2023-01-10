@@ -58,17 +58,17 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// TODO(user): your logic here
 	// deploy logstash
 	var logstash vstarv1.Logstash
-	var deployment *appsv1.Deployment
+	var deployment appsv1.Deployment
 	if err := r.Get(ctx, req.NamespacedName, &logstash); err != nil {
 		l.Error(err, "unable to fetch Logstash")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	err := r.Get(ctx, req.NamespacedName, deployment)
+	err := r.Get(ctx, req.NamespacedName, &deployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			l.Info("deployment not found")
 			deployment = r.CreateDeployment(ctx, &logstash)
-			err := r.Create(ctx, deployment)
+			err := r.Create(ctx, &deployment)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
@@ -76,7 +76,7 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 	//binding deployment to podsbook
-	if err = ctrl.SetControllerReference(&logstash, deployment, r.Scheme); err != nil {
+	if err = ctrl.SetControllerReference(&logstash, &deployment, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
@@ -90,8 +90,8 @@ func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) *appsv1.Deployment {
-	var deployment = &appsv1.Deployment{
+func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) appsv1.Deployment {
+	var deployment = appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      logstash.Name,
 			Namespace: logstash.Namespace,
