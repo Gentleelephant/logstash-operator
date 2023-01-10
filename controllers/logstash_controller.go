@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,20 +90,10 @@ func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) (*appsv1.Deployment, error) {
-	namespace := logstash.ObjectMeta.Namespace
-	fmt.Println("================raw namespace:", namespace)
-	if namespace == "" {
-		namespace = "default"
-	}
-	fmt.Println("================final namespace:", namespace)
 	var deployment = &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      logstash.Name,
-			Namespace: namespace,
+			Namespace: logstash.Namespace,
 			Labels: map[string]string{
 				"app": logstash.Name,
 			},
@@ -128,10 +117,6 @@ func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vst
 							Name:            logstash.Name,
 							Image:           logstash.Spec.Image,
 							Command:         []string{"tail", "-f", "/dev/null"},
-							Args:            nil,
-							WorkingDir:      "",
-							Ports:           nil,
-							VolumeMounts:    nil,
 							ImagePullPolicy: "Always",
 						},
 					},
