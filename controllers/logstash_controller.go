@@ -67,7 +67,8 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if err != nil {
 		if errors.IsNotFound(err) {
 			l.Info("deployment not found")
-			deployment, err = r.CreateDeployment(ctx, &logstash)
+			deployment = r.CreateDeployment(ctx, &logstash)
+			err := r.Create(ctx, deployment)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
@@ -89,7 +90,7 @@ func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) (*appsv1.Deployment, error) {
+func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) *appsv1.Deployment {
 	var deployment = &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      logstash.Name,
@@ -124,5 +125,5 @@ func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vst
 			},
 		},
 	}
-	return deployment, nil
+	return deployment
 }
