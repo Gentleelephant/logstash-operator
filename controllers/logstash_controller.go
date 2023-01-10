@@ -69,7 +69,7 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		if errors.IsNotFound(err) {
 			l.Info("deployment not found")
 			deployment = r.CreateDeployment(ctx, &logstash)
-			fmt.Printf("deployment: %+v")
+			fmt.Printf("deployment: %+v", deployment)
 			err := r.Create(ctx, &deployment)
 			if err != nil {
 				return ctrl.Result{}, err
