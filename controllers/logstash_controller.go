@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,6 +69,7 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		if errors.IsNotFound(err) {
 			l.Info("deployment not found")
 			deployment = r.CreateDeployment(ctx, &logstash)
+			fmt.Printf("deployment: %+v")
 			err := r.Create(ctx, &deployment)
 			if err != nil {
 				return ctrl.Result{}, err
