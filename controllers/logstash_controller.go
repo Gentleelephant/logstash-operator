@@ -68,17 +68,15 @@ func (r *LogstashReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if err != nil {
 		if errors.IsNotFound(err) {
 			l.Info("deployment not found")
-			deployment = r.CreateDeployment(ctx, &logstash)
-			fmt.Printf("deployment: %+v", deployment)
+			err = r.CreateDeployment(ctx, &logstash)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
 			err := r.Create(ctx, &deployment)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
 		}
-		return ctrl.Result{}, err
-	}
-	//binding deployment to podsbook
-	if err = ctrl.SetControllerReference(&logstash, &deployment, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
@@ -92,7 +90,7 @@ func (r *LogstashReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) appsv1.Deployment {
+func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vstarv1.Logstash) error {
 	var deployment = appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      logstash.Name,
@@ -127,5 +125,11 @@ func (r *LogstashReconciler) CreateDeployment(ctx context.Context, logstash *vst
 			},
 		},
 	}
-	return deployment
+	fmt.Printf("deployment: %+v", deployment)
+	r.Create(ctx, &deployment)
+	//binding deployment to podsbook
+	if err := ctrl.SetControllerReference(logstash, &deployment, r.Scheme); err != nil {
+		return err
+	}
+	return nil
 }
